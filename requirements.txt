@@ -9,4 +9,4 @@ opencv_python==4.5.1.48
 matplotlib==3.3.2
 Pillow==7.2.0
 natsort==7.1.1
-
+pycocotools==2.0.4
