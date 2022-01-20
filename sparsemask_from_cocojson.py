@@ -5,13 +5,19 @@ from pycocotools.coco import COCO
 import cv2
 
 
-TEETH_COLORS = [(0,0,0), (255,0,0), (0,255,0), (255,255,0), (0,0,255), (255,0,255), (0,255,255)]
+TEETH_COLORS = [(0, 0, 0), (255, 0, 0), (0, 255, 0),
+                (255, 255, 0), (0, 0, 255), (255, 0, 255), (0, 255, 255)]
 
 ######### MAIN #########
+
+
 def main():
-    parser = argparse.ArgumentParser(description='Parse requirements and model paths.')
-    parser.add_argument('--annotationpath', help='coco annotation path in json format', required=True)
-    parser.add_argument('--savepath', help='save directory location in project dir', required=True)
+    parser = argparse.ArgumentParser(
+        description='Parse requirements and model paths.')
+    parser.add_argument(
+        '--annotationpath', help='coco annotation path in json format', required=True)
+    parser.add_argument(
+        '--savepath', help='save directory location in project dir', required=True)
     args = vars(parser.parse_args())
 
     annotation_path = args['annotationpath']
@@ -21,7 +27,6 @@ def main():
     if not os.path.isdir(save_folder):
         os.mkdir(str(save_folder))
         print('Create output directory: {}'.format(save_folder))
-
 
     cocoann = COCO(annotation_path)
     cat_ids = cocoann.getCatIds()
@@ -36,7 +41,8 @@ def main():
     for img_id in imgIds:       # for each image
         img = cocoann.loadImgs(img_id)[0]
         print("Image id in for:", img_id, img['file_name'])
-        anns_img = np.zeros((img['height'], img['width']))       # RGB blank image
+        # RGB blank image
+        anns_img = np.zeros((img['height'], img['width']))
 
         for ann in anns:        # for each annotation
             if ann['image_id'] == img_id:       # check annotations for the image
@@ -57,13 +63,10 @@ def annotation_to_colormask(mask, color):
 
     for w in range(width):
         for h in range(height):
-            if mask[h,w] == 1:
-                color_mask[h,w,:] = color
+            if mask[h, w] == 1:
+                color_mask[h, w, :] = color
 
     return color_mask
-
-
-
 
 
 ##############  MAIN  ##############
