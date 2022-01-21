@@ -3,7 +3,7 @@ import numpy as np
 import argparse
 from pycocotools.coco import COCO
 import cv2
-
+from tqdm import tqdm
 
 TEETH_COLORS = [(0, 0, 0), (255, 0, 0), (0, 255, 0),
                 (255, 255, 0), (0, 0, 255), (255, 0, 255), (0, 255, 255)]
@@ -30,31 +30,34 @@ def main():
 
     cocoann = COCO(annotation_path)
     cat_ids = cocoann.getCatIds()
-    print("Categories IDs:", cat_ids)
+    #print("Categories IDs:", cat_ids)
     imgIds = cocoann.getImgIds()
-    print("ImageIDs:", imgIds)
+    #print("ImageIDs:", imgIds)
     anns_ids = cocoann.getAnnIds(imgIds=imgIds, catIds=cat_ids, iscrowd=None)
-    print("Annotation IDs:", anns_ids)
+    #print("Annotation IDs:", anns_ids)
     anns = cocoann.loadAnns(anns_ids)
-    print("Annotations:", anns)
+    #print("Annotations:", anns)
 
-    for img_id in imgIds:       # for each image
-        img = cocoann.loadImgs(img_id)[0]
-        print("Image id in for:", img_id, img['file_name'])
-        # RGB blank image
-        anns_img = np.zeros((img['height'], img['width']))
+    with tqdm(total=len(imgIds)) as t:
+        for img_id in imgIds:       # for each image
+            img = cocoann.loadImgs(img_id)[0]
+            #print("Image id in for:", img_id, img['file_name'])
+            # RGB blank image
+            anns_img = np.zeros((img['height'], img['width']))
 
-        for ann in anns:        # for each annotation
-            if ann['image_id'] == img_id:       # check annotations for the image
-                ann_mask = cocoann.annToMask(ann) * ann['category_id']
-                anns_img = np.maximum(anns_img, ann_mask)
-                print(ann)
+            for ann in anns:        # for each annotation
+                if ann['image_id'] == img_id:       # check annotations for the image
+                    ann_mask = cocoann.annToMask(ann) * ann['category_id']
+                    anns_img = np.maximum(anns_img, ann_mask)
+                    #print(ann)
 
-        print("Mask image unique:", np.unique(ann_mask))
-        mask_name = os.path.splitext(img['file_name'])[0]
-        mask_path = os.path.join(save_folder, mask_name+".png")
-        print(mask_path)
-        cv2.imwrite(mask_path, anns_img)
+            #print("Mask image unique:", np.unique(ann_mask))
+            mask_name = os.path.splitext(img['file_name'])[0]
+            mask_path = os.path.join(save_folder, mask_name+".png")
+            #print(mask_path)
+            cv2.imwrite(mask_path, anns_img)
+            t.set_description(mask_name)
+            t.update()
 
 
 def annotation_to_colormask(mask, color):
