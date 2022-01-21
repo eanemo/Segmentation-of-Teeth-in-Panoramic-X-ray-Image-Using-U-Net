@@ -15,12 +15,12 @@ def main():
     parser = argparse.ArgumentParser(
         description='Parse requirements and model paths.')
     parser.add_argument(
-        '--annotationpath', help='coco annotation path in json format', required=True)
+        '--annotationfilepath', help='coco annotation file (in json format) path', required=True)
     parser.add_argument(
         '--savepath', help='save directory location in project dir', required=True)
     args = vars(parser.parse_args())
 
-    annotation_path = args['annotationpath']
+    annotation_path = args['annotationfilepath']
     save_folder = args['savepath']
 
     # Store directory
