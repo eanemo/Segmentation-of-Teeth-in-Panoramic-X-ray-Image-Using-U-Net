@@ -9,7 +9,7 @@ from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalizat
 from tensorflow.keras.models import Model
 
 
-def UNET (input_shape=(512,512,1),last_activation='sigmoid'):
+def UNET (input_shape=(512,512,1),last_activation='sigmoid', num_classes=1):
     inputs=Input(shape=input_shape)
     
     conv1 = Conv2D(32,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(inputs)
@@ -70,7 +70,7 @@ def UNET (input_shape=(512,512,1),last_activation='sigmoid'):
     d9=Dropout(0.1)(conv21)
     conv22 = Conv2D(32,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(d9)
     
-    outputs = Conv2D(1,(1,1), activation = last_activation, padding = 'same', kernel_initializer = 'he_normal')(conv22)
+    outputs = Conv2D(num_classes,(1,1), activation = last_activation, padding = 'same', kernel_initializer = 'he_normal')(conv22)
     model2 = Model( inputs = inputs, outputs = outputs)
     
     return model2
