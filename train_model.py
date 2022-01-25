@@ -36,16 +36,15 @@ def main(args):
     img_tst_path = os.path.join(dataset_path, "test_images/")
     mask_tst_path = os.path.join(dataset_path, "test_masks/")
     # Output
-    save_path = args.save_path #"DataNemo/results/inference"
-    model_path = args.model_path #"checkpoints/uNet_171rgb_5cls_front"
+    save_path = args.save_path  # "DataNemo/results/inference"
+    model_path = args.model_path  # "checkpoints/uNet_171rgb_5cls_front"
     save_model_path = model_path + datetime.now().strftime('_%Y-%m-%d_%H-%M-%S')
     # Params
     data_size = (512, 512)
     # [6 teeth + 1 background] - [2 pairs + 2 cent incisors + 1 background]
-    num_cls = 6
-    ouput_net_channels = 6
-    num_epc = 100
-    save_tf = False                 # save final or checkpoints in TF format
+    num_cls = args.num_classes
+    num_epc = args.epochs
+    save_tf = model_path != None                 # save final or checkpoints in TF format
     save_onnx = False               # save final or checkpoints in onnx format
     save_checkpoints = False        # save model for every 10 epochs
     save_prediction = True      # save test inference masks
@@ -79,9 +78,8 @@ def main(args):
     # mask_tst = np.float32(mask_tst/255)
 
     # Initialize model
-    # model = UNET(input_shape=(data_size[1],data_size[0],3), last_activation='sigmoid', num_classes=ouput_net_channels)     # binary
     model = UNET(input_shape=(data_size[1], data_size[0], 3),
-                 last_activation='softmax', num_classes=ouput_net_channels)
+                 last_activation='softmax', num_classes=num_cls)
     # model.summary()
 
     # TRAINING
@@ -240,12 +238,18 @@ if __name__ == "__main__":
         description='Entrenamiento de la red UNet.')
     parser.add_argument('dataset_path', help='Source dir del dataset')
     parser.add_argument(
-        'model_path', help='Dirección dónde se almacenará el modelo')
-    parser.add_argument(
         'save_path', help='Dirección de salida para guardar el resultado')
+    parser.add_argument(
+        '--model_path', help='Dirección dónde se almacenará el modelo', required=False)
     parser.add_argument('--verbose', dest='verbose',
                         action='store_true', help="Mostrar informacion del proceso")
-    parser.add_argument('--batch', type=int, help="Tamaño del batch", default=8)
+    parser.add_argument('--batch', type=int,
+                        help="Tamaño del batch", default=8)
+    parser.add_argument('--num_classes', type=int,
+                        help="Número de clases de la segmentación (classes + fondo)", default=2)
+    parser.add_argument('--epochs', type=int,
+                        help="Número de épocas del entrenamiento", default=100)
+
     parser.set_defaults(verbose=False)
     args = parser.parse_args()
 
