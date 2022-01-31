@@ -8,7 +8,7 @@ import Augmentor
 
 def main(args):
     images_path = args['images_path']
-    image_label = split(images_path)
+    image_label = split(images_path)[1]
     masks_path = args['masks_path']
     output_path = args['output_path']
     samples = args['augment_to']
