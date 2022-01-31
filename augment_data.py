@@ -4,15 +4,14 @@ from glob import glob
 from os.path import join, split
 from os import makedirs
 import Augmentor
-import pip
 
 
 def main(args):
     images_path = args['images_path']
+    image_label = split(images_path)
     masks_path = args['masks_path']
     output_path = args['output_path']
     samples = args['augment_to']
-    print(images_path)
 
     # The augmented dataset should be a randomised image with some random distortion and maybe some brightness added/substracted
     pipeline = Augmentor.Pipeline(
@@ -35,8 +34,8 @@ def main(args):
 
         files = glob(src_dir + "/*.png")
 
-        img_remove_label = 'images_png_original_'
-        gt_remove_label = '_groundtruth_(1)_images_png_'
+        img_remove_label = image_label + '_original_'
+        gt_remove_label = '_groundtruth_(1)_%s_' % (image_label)
 
         for filepath in files:
             _, filename = split(filepath)
