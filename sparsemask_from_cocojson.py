@@ -4,6 +4,7 @@ import argparse
 from pycocotools.coco import COCO
 import cv2
 from tqdm import tqdm
+import Augmentor
 
 TEETH_COLORS = [(0, 0, 0), (255, 0, 0), (0, 255, 0),
                 (255, 255, 0), (0, 0, 255), (255, 0, 255), (0, 255, 255)]
@@ -18,10 +19,12 @@ def main():
         '--annotationfilepath', help='coco annotation file (in json format) path', required=True)
     parser.add_argument(
         '--savepath', help='save directory location in project dir', required=True)
+    parser.add_argument('--augment-to', dest='augment_to', help='Augment data to number', type=int, default=-1)
     args = vars(parser.parse_args())
 
     annotation_path = args['annotationfilepath']
     save_folder = args['savepath']
+    print(args)
 
     # Store directory
     if not os.path.isdir(save_folder):
@@ -58,6 +61,9 @@ def main():
             cv2.imwrite(mask_path, anns_img)
             t.set_description(mask_name)
             t.update()
+
+    if args.augment_to > -1:
+        print("Augment")
 
 
 def annotation_to_colormask(mask, color):

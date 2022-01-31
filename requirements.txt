@@ -11,3 +11,4 @@ Pillow==7.2.0
 natsort==7.1.1
 pycocotools==2.0.4
 tqdm==4.62.3
+Augmentor==0.2.9
