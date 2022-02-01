@@ -5,12 +5,12 @@ from ntpath import join
 import sys
 import os
 import numpy as np
-import time
 from datetime import datetime
 import matplotlib.pyplot as plt
 import cv2
 
 from tensorflow.keras.metrics import MeanIoU
+from tensorflow.keras.losses import sparse_categorical_crossentropy
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 import tensorflow.keras.backend as K
 import tensorflow as tf
@@ -21,6 +21,7 @@ from download_dataset import *
 from images_prepare import *
 from masks_prepare import *
 from model import *
+from focal_loss import SparseCategoricalFocalLoss
 
 import argparse
 
@@ -28,14 +29,17 @@ sys.path.append(os.getcwd())
 
 ##### MAIN #####
 
+
 class MyMeanIOU(MeanIoU):
     def __init__(self, num_classes, name=None, dtype=None):
-        super(MyMeanIOU, self).__init__(num_classes=num_classes, name=name, dtype=dtype)
+        super(MyMeanIOU, self).__init__(
+            num_classes=num_classes, name=name, dtype=dtype)
 
     def update_state(self, y_true, y_pred, sample_weight=None):
         y_pred_argmax = np.argmax(y_pred.numpy(), 3)
         y_pred_argmax = np.expand_dims(y_pred_argmax, axis=3)
-        super(MyMeanIOU, self).update_state(y_true=y_true, y_pred=y_pred_argmax, sample_weight=sample_weight)
+        super(MyMeanIOU, self).update_state(y_true=y_true,
+                                            y_pred=y_pred_argmax, sample_weight=sample_weight)
 
 
 def main(args):
@@ -91,24 +95,33 @@ def main(args):
     # Initialize model
     model = UNET(input_shape=(data_size[1], data_size[0], 3),
                  last_activation='softmax', num_classes=num_cls)
-    # model.summary()
+
+    selected_losses = list()
+    # choices=['sparse_categorical_crossentropy', 'focal_loss', 'dice_loss', 'tversky_loss', 'bce_dice_loss']
+    for loss in args.loss:
+        if loss == 'focal_loss':
+            loss = SparseCategoricalFocalLoss(gamma=4)
+            selected_losses.append(loss)
+        else:
+            selected_losses.append(sparse_categorical_crossentropy)
 
     # TRAINING
     callbackES = EarlyStopping(monitor='loss',  patience=10)
-    callbackSave = ModelCheckpoint(filepath=join(save_model_path, "best_model.h5"), save_best_only=True)
+    callbackSave = ModelCheckpoint(filepath=join(
+        save_model_path, "best_model.h5"), save_best_only=True)
     # model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy', 'categorical_accuracy', MeanIoU(num_classes=2), dice_coef])       # binary segmentation
     # metrics=['accuracy', 'sparse_categorical_accuracy', MeanIoU(num_classes=num_cls), dice_coef]
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=[
+    model.compile(optimizer='adam', loss=selected_losses, metrics=[
                   'sparse_categorical_accuracy', MyMeanIOU(num_classes=num_cls)], run_eagerly=True)
 
     print("Training model ...")
 
     history = model.fit(img_trn, mask_trn,
-                            batch_size=args.batch,
-                            epochs=num_epc,       # num_epc
-                            callbacks=[callbackES, callbackSave],
-                            verbose=2,
-                            validation_data=(img_tst, mask_tst))
+                        batch_size=args.batch,
+                        epochs=num_epc,       # num_epc
+                        callbacks=[callbackES, callbackSave],
+                        verbose=2,
+                        validation_data=(img_tst, mask_tst))
 
     # Predict images
     predict_img = model.predict(img_tst)
@@ -228,6 +241,8 @@ if __name__ == "__main__":
                         help="Número de clases de la segmentación (classes + fondo)", default=2)
     parser.add_argument('--epochs', type=int,
                         help="Número de épocas del entrenamiento", default=100)
+    parser.add_argument('--loss', nargs='+', required=True, choices=['sparse_categorical_crossentropy',
+                        'focal_loss'], default='sparse_categorical_crossentropy')
 
     parser.set_defaults(verbose=False)
     args = parser.parse_args()
