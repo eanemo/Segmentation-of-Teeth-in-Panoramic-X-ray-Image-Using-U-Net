@@ -100,7 +100,7 @@ def main(args):
     # choices=['sparse_categorical_crossentropy', 'focal_loss', 'dice_loss', 'tversky_loss', 'bce_dice_loss']
     for loss in args.loss:
         if loss == 'focal_loss':
-            loss = SparseCategoricalFocalLoss(gamma=4)
+            loss = SparseCategoricalFocalLoss(gamma=2)
             selected_losses.append(loss)
         else:
             selected_losses.append(sparse_categorical_crossentropy)
