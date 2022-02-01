@@ -25,6 +25,8 @@ from focal_loss import SparseCategoricalFocalLoss
 
 import argparse
 
+import json
+
 sys.path.append(os.getcwd())
 
 ##### MAIN #####
@@ -122,6 +124,11 @@ def main(args):
                         callbacks=[callbackES, callbackSave],
                         verbose=2,
                         validation_data=(img_tst, mask_tst))
+
+    plot_graphics(history=history, model_name_path=save_model_path)
+
+    with open(join(save_model_path, 'history.json'), 'w') as f:
+        json.dump(history.history, f, indent=2)
 
     # Predict images
     predict_img = model.predict(img_tst)
@@ -222,6 +229,36 @@ def get_class_iou(conf_matrix, num_classes):
                 wrong_pool += conf_matrix[j, i]
         iou[i] = conf_matrix[i, i] / (conf_matrix[i, i]+wrong_pool)
     return iou
+
+
+def plot_graphics(history, model_name_path):
+    # summarize history for accuracy
+    plt.plot(history.history['sparse_categorical_accuracy'])
+    plt.plot(history.history['val_sparse_categorical_accuracy'])
+    plt.title('model sparse_categorical_accuracy')
+    plt.ylabel('sparse_categorical_accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig(join(model_name_path, 'sparse_categorical_accuracy_log.png'))
+    plt.clf()
+    # summarize history for loss
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig(join(model_name_path, 'loss_log.png'))
+
+    plt.clf()
+    # summarize history for loss
+    plt.plot(history.history['my_mean_iou'])
+    plt.plot(history.history['val_my_mean_iou'])
+    plt.title('model mean_iou')
+    plt.ylabel('mean_iou')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig(join(model_name_path,  'mean_iou_log.png'))
 
 
 #################################
