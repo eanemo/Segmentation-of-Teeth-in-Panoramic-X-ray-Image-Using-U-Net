@@ -71,6 +71,7 @@ def write_config(save_path, args):
     with open(join(save_path, 'config.json'), 'w') as f:
         json.dump(args, f, indent=2)
 
+
 def main(args):
     # Input
     dataset_path = args.dataset_path
@@ -138,9 +139,12 @@ def main(args):
             selected_losses.append(sparse_categorical_crossentropy)
 
     # TRAINING
-    args.patience = int(num_epc / 10)
-    if args.patience < 5:
-        args.patience = 5
+    if args.patience == None:
+        args.patience = int(num_epc / 10)
+
+        # Only applied if patience is calculated
+        if args.patience < 5:
+            args.patience = 5
 
     callbackES = EarlyStopping(monitor='loss',  patience=args.patience)
     callbackSave = ModelCheckpoint(filepath=join(
@@ -331,6 +335,8 @@ if __name__ == "__main__":
                         choices=['adam',  'nadam'], default='adam')
     parser.add_argument(
         '--lr', help='Learning rate used in the optimizer', type=float, default=0.001)
+    parser.add_argument(
+        '--patience', help='Learning rate used in the optimizer', type=int)
     parser.set_defaults(verbose=False)
     args = parser.parse_args()
 
