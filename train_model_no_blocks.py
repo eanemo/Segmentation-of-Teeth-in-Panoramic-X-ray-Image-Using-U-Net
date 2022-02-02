@@ -45,6 +45,32 @@ class MyMeanIOU(MeanIoU):
                                             y_pred=y_pred_argmax, sample_weight=sample_weight)
 
 
+def write_json(save_path, history):
+    with open(join(save_path, 'history.json'), 'w') as f:
+        best_values = history.history
+        if 'sparse_categorical_accuracy' in history.history.keys() and 'val_sparse_categorical_accuracy' in history.history.keys():
+            best_values['best_sparse_categorical_accuracy'] = np.max(
+                np.array(history.history['sparse_categorical_accuracy']))
+            best_values['best_val_sparse_categorical_accuracy'] = np.max(
+                np.array(history.history['val_sparse_categorical_accuracy']))
+        if 'loss' in history.history.keys() and 'val_loss' in history.history.keys():
+            best_values['best_loss'] = np.min(
+                np.array(history.history['loss']))
+            best_values['best_val_loss'] = np.min(
+                np.array(history.history['val_loss']))
+        if 'my_mean_iou' in history.history.keys() and 'val_my_mean_iou' in history.history.keys():
+            best_values['best_mean_iou'] = np.max(
+                np.array(history.history['my_mean_iou']))
+            best_values['best_val_mean_iou'] = np.max(
+                np.array(history.history['val_my_mean_iou']))
+
+        json.dump(best_values, f, indent=2)
+
+
+def write_config(save_path, args):
+    with open(join(save_path, 'config.json'), 'w') as f:
+        json.dump(args, f, indent=2)
+
 def main(args):
     # Input
     dataset_path = args.dataset_path
@@ -54,7 +80,10 @@ def main(args):
     mask_tst_path = os.path.join(dataset_path, "test_masks/")
     # Output
     save_path = args.save_path  # "DataNemo/results/inference"
-    model_path = args.model_path  # "checkpoints/uNet_171rgb_5cls_front"
+    if args.model_path == None:
+        model_path = save_path
+    else:
+        model_path = args.model_path  # "checkpoints/uNet_171rgb_5cls_front"
     save_model_path = model_path + datetime.now().strftime('_%Y-%m-%d_%H-%M-%S')
     # Params
     data_size = (512, 512)
@@ -135,8 +164,8 @@ def main(args):
 
     plot_graphics(history=history, model_name_path=model_path)
 
-    with open(join(model_path, 'history.json'), 'w') as f:
-        json.dump(history.history, f, indent=2)
+    write_json(model_path, history)
+    write_config(model_path, vars(args))
 
     # Predict images
     predict_img = model.predict(img_tst)
@@ -294,10 +323,10 @@ if __name__ == "__main__":
                         help="Número de épocas del entrenamiento", default=100)
     parser.add_argument('--loss', nargs='+', required=True, choices=['sparse_categorical_crossentropy',
                         'focal_loss'], default='sparse_categorical_crossentropy')
-    parser.add_argument('--optimizer', required=True, help='Optimizer used to train the model',
+    parser.add_argument('--optimizer', help='Optimizer used to train the model',
                         choices=['adam',  'nadam'], default='adam')
-    parser.add_argument('--lr', help='Learning rate used in the optimizer',
-                        required=True, type=float, default=0.001)
+    parser.add_argument(
+        '--lr', help='Learning rate used in the optimizer', type=float, default=0.001)
     parser.set_defaults(verbose=False)
     args = parser.parse_args()
 
