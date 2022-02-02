@@ -138,11 +138,11 @@ def main(args):
             selected_losses.append(sparse_categorical_crossentropy)
 
     # TRAINING
-    patience = int(num_epc / 10)
-    if patience < 5:
-        patience = 5
+    args.patience = int(num_epc / 10)
+    if args.patience < 5:
+        args.patience = 5
 
-    callbackES = EarlyStopping(monitor='loss',  patience=patience)
+    callbackES = EarlyStopping(monitor='loss',  patience=args.patience)
     callbackSave = ModelCheckpoint(filepath=join(
         model_path, "best_model.h5"), save_best_only=True)
 
