@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import cv2
 
 from tensorflow.keras.metrics import MeanIoU
+from tensorflow.keras.optimizers import Adam, Nadam
 from tensorflow.keras.losses import sparse_categorical_crossentropy
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 import tensorflow.keras.backend as K
@@ -110,10 +111,17 @@ def main(args):
     # TRAINING
     callbackES = EarlyStopping(monitor='loss',  patience=10)
     callbackSave = ModelCheckpoint(filepath=join(
-        save_model_path, "best_model.h5"), save_best_only=True)
+        model_path, "best_model.h5"), save_best_only=True)
+
+    # Optimizer
+    if (args.optimizer == 'nadam'):
+        optimizer = Nadam(learning_rate=args.lr)
+    else:
+        optimizer = Adam(learning_rate=args.lr)
+
     # model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy', 'categorical_accuracy', MeanIoU(num_classes=2), dice_coef])       # binary segmentation
     # metrics=['accuracy', 'sparse_categorical_accuracy', MeanIoU(num_classes=num_cls), dice_coef]
-    model.compile(optimizer='adam', loss=selected_losses, metrics=[
+    model.compile(optimizer=optimizer, loss=selected_losses, metrics=[
                   'sparse_categorical_accuracy', MyMeanIOU(num_classes=num_cls)], run_eagerly=True)
 
     print("Training model ...")
@@ -125,9 +133,9 @@ def main(args):
                         verbose=2,
                         validation_data=(img_tst, mask_tst))
 
-    plot_graphics(history=history, model_name_path=save_model_path)
+    plot_graphics(history=history, model_name_path=model_path)
 
-    with open(join(save_model_path, 'history.json'), 'w') as f:
+    with open(join(model_path, 'history.json'), 'w') as f:
         json.dump(history.history, f, indent=2)
 
     # Predict images
@@ -232,33 +240,39 @@ def get_class_iou(conf_matrix, num_classes):
 
 
 def plot_graphics(history, model_name_path):
-    # summarize history for accuracy
-    plt.plot(history.history['sparse_categorical_accuracy'])
-    plt.plot(history.history['val_sparse_categorical_accuracy'])
-    plt.title('model sparse_categorical_accuracy')
-    plt.ylabel('sparse_categorical_accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    plt.savefig(join(model_name_path, 'sparse_categorical_accuracy_log.png'))
-    plt.clf()
-    # summarize history for loss
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('model loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    plt.savefig(join(model_name_path, 'loss_log.png'))
+    # sparse_categorical_accuracy
+    if 'sparse_categorical_accuracy' in history.history.keys() and 'val_sparse_categorical_accuracy' in history.history.keys():
+        plt.plot(history.history['sparse_categorical_accuracy'])
+        plt.plot(history.history['val_sparse_categorical_accuracy'])
+        plt.title('model sparse_categorical_accuracy')
+        plt.ylabel('sparse_categorical_accuracy')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
+        plt.savefig(
+            join(model_name_path, 'sparse_categorical_accuracy_log.png'))
+        plt.clf()
 
-    plt.clf()
+    # History loss
+    if 'loss' in history.history.keys() and 'val_loss' in history.history.keys():
+        plt.plot(history.history['loss'])
+        plt.plot(history.history['val_loss'])
+        plt.title('model loss')
+        plt.ylabel('loss')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
+        plt.savefig(join(model_name_path, 'loss_log.png'))
+
+        plt.clf()
+
     # summarize history for loss
-    plt.plot(history.history['my_mean_iou'])
-    plt.plot(history.history['val_my_mean_iou'])
-    plt.title('model mean_iou')
-    plt.ylabel('mean_iou')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    plt.savefig(join(model_name_path,  'mean_iou_log.png'))
+    if 'my_mean_iou' in history.history.keys() and 'val_my_mean_iou' in history.history.keys():
+        plt.plot(history.history['my_mean_iou'])
+        plt.plot(history.history['val_my_mean_iou'])
+        plt.title('model mean_iou')
+        plt.ylabel('mean_iou')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
+        plt.savefig(join(model_name_path,  'mean_iou_log.png'))
 
 
 #################################
@@ -280,7 +294,10 @@ if __name__ == "__main__":
                         help="Número de épocas del entrenamiento", default=100)
     parser.add_argument('--loss', nargs='+', required=True, choices=['sparse_categorical_crossentropy',
                         'focal_loss'], default='sparse_categorical_crossentropy')
-
+    parser.add_argument('--optimizer', required=True, help='Optimizer used to train the model',
+                        choices=['adam',  'nadam'], default='adam')
+    parser.add_argument('--lr', help='Learning rate used in the optimizer',
+                        required=True, type=float, default=0.001)
     parser.set_defaults(verbose=False)
     args = parser.parse_args()
 
