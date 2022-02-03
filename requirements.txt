@@ -13,3 +13,4 @@ pycocotools==2.0.4
 tqdm==4.62.3
 Augmentor==0.2.9
 focal_loss
+talos==1.0.2
