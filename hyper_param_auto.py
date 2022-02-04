@@ -169,7 +169,7 @@ def main(args):
 
     # Training experiments
     p = {
-        'lr': (0.1, 0.01, 0.001),
+        'lr': [0.1, 0.01, 0.001],
         'model_path': [args.save_path],
         'classes': [2],
         'batch': [args.batch],
@@ -184,7 +184,7 @@ def main(args):
                 y_val=mask_tst,
                 model=build_model,
                 params=p,
-                experiment_name='test',
+                experiment_name=args.experiment,
                 reduction_metric='val_my_mean_iou')
 
     tl.Analyze(experiment)
@@ -311,6 +311,8 @@ if __name__ == "__main__":
                         help="Número de épocas del entrenamiento", default=100)
     parser.add_argument(
         '--patience', help='Learning rate used in the optimizer', type=int, default=5)
+    parser.add_argument(
+        '--experiment', help='Experiment name used', type=str, default='test')
     parser.set_defaults(verbose=False)
     args = parser.parse_args()
 
