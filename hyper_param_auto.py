@@ -90,7 +90,7 @@ def build_model(x_train, y_train, x_val, y_val, params):
     model.compile(optimizer=optimizer, loss=selected_losses, metrics=[
                   'sparse_categorical_accuracy', MyMeanIOU(num_classes=params['classes'])], run_eagerly=True)
 
-    callbackES = EarlyStopping(monitor='loss',  patience=params['patience'])
+    callbackES = tl.utils.early_stopper(epochs=params['patience'])
     callbackSave = ModelCheckpoint(filepath=join(
         params['model_path'], "best_model.h5"), save_best_only=True)
 
@@ -178,7 +178,7 @@ def main(args):
         'loss': [sparse_categorical_crossentropy, SparseCategoricalFocalLoss(gamma=1), SparseCategoricalFocalLoss(gamma=2), SparseCategoricalFocalLoss(gamma=4)]
     }
 
-    t = tl.Scan(x=img_trn,
+    experiment = tl.Scan(x=img_trn,
                 y=mask_trn,
                 x_val=img_tst,
                 y_val=mask_tst,
@@ -187,46 +187,9 @@ def main(args):
                 experiment_name='test',
                 reduction_metric='val_my_mean_iou')
 
-    plot_graphics(history=history, model_name_path=model_path)
+    tl.Analyze(experiment)
 
-    write_json(model_path, history)
-    write_config(model_path, vars(args))
-
-    # Predict images
-    predict_img = model.predict(img_tst)
-    predict_img_argmax = np.argmax(predict_img, 3)
-    predict_img_argmax = np.expand_dims(predict_img_argmax, axis=3)
-
-    iou = MeanIoU(num_classes=num_cls)
-    iou.update_state(mask_tst, predict_img_argmax)
-    print("Evaluation MeanIoU:", iou.result().numpy())
-    iou_values = np.array(iou.get_weights()).reshape(num_cls, num_cls)
-    print(get_class_iou(iou_values, num_cls))
-
-    # Inference
-    if save_prediction:
-        print("****** Predictions saved in directory:", save_path)
-        # Save masks per class
-        for i in range(predict_img.shape[0]):
-            img_name = os.path.splitext(img_tst_dirs[i])[0]
-            masks = np.array(predict_img[i, :, :, :]*255)
-            for p in range(masks.shape[2]):
-                mskpath = os.path.join(
-                    save_path, '{}_mask_{}.png'.format(img_name, p))
-                cv2.imwrite(mskpath, masks[:, :, p])
-                print("Mask plane: {}".format(mskpath))
-
-        # Agregate masks in the final mask
-        predict_img = np.argmax(predict_img, 3)
-        # print("Mask shape post argmax:", predict_img.shape)
-
-        # Save aggregated mask
-        for i, img in enumerate(img_tst_dirs):
-            img_name = os.path.splitext(img)[0]
-            mskpath = os.path.join(save_path, 'mask_{}.png'.format(img_name))
-            mask = predict_img[i, :, :]
-            cv2.imwrite(mskpath, mask)
-            print("Mask: {} --unique--> {}".format(mskpath, np.unique(mask)))
+    tl.Evaluate(experiment)
 
 
 ##### Dice Coefficient implementation #####
