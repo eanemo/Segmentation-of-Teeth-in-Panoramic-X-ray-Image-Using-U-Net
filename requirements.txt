@@ -14,3 +14,4 @@ tqdm==4.62.3
 Augmentor==0.2.9
 focal_loss
 talos==1.0.2
+tf2onnx==1.9.3
