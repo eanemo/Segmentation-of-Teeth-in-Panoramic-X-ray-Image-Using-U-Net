@@ -1,5 +1,4 @@
 import argparse
-from black import out
 import tensorflow as tf
 import tf2onnx
 
