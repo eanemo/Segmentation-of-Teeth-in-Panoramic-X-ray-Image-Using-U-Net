@@ -20,7 +20,7 @@ def main(args):
     # Run the inference
     result = sess.run(None, {'input': input_img})
     print(result[0].shape)
-    output_img = np.argmax(result[0], axis=3) * 255
+    output_img = np.argmax(result[0], axis=3).astype(np.uint8) * 255
     output_img = np.squeeze(output_img)
     
     print(output_img.shape)
