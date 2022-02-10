@@ -133,7 +133,7 @@ def main(args):
     # choices=['sparse_categorical_crossentropy', 'focal_loss', 'dice_loss', 'tversky_loss', 'bce_dice_loss']
     for loss in args.loss:
         if loss == 'focal_loss':
-            loss = SparseCategoricalFocalLoss(gamma=2)
+            loss = SparseCategoricalFocalLoss(gamma=args.gamma)
             selected_losses.append(loss)
         else:
             selected_losses.append(sparse_categorical_crossentropy)
@@ -146,9 +146,17 @@ def main(args):
         if args.patience < 5:
             args.patience = 5
 
+
+    if args.save_metric == 'val_metric':
+        monitor_value = 'val_my_mean_iou'
+        mode_value = 'max'
+    else:
+        monitor_value = 'val_loss'
+        mode_value = 'min'
+
     callbackES = EarlyStopping(monitor='loss',  patience=args.patience)
     callbackSave = ModelCheckpoint(filepath=join(
-        model_path, "best_model.h5"), save_best_only=True)
+        model_path, "best_model.h5"), save_best_only=True, monitor=monitor_value, mode=mode_value)
 
     # Optimizer
     if (args.optimizer == 'nadam'):
@@ -337,6 +345,10 @@ if __name__ == "__main__":
         '--lr', help='Learning rate used in the optimizer', type=float, default=0.001)
     parser.add_argument(
         '--patience', help='Learning rate used in the optimizer', type=int)
+    parser.add_argument(
+        '--save_metric', help='Learning rate used in the optimizer',  choices=['val_loss', 'val_metric'], default='val_loss')
+    parser.add_argument(
+        '--gamma', help='Gamma param for the focal loss (if used)',  type=int, default=2)
     parser.set_defaults(verbose=False)
     args = parser.parse_args()
 
