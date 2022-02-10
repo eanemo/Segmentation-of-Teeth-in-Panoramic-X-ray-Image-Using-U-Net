@@ -344,9 +344,9 @@ if __name__ == "__main__":
     parser.add_argument(
         '--lr', help='Learning rate used in the optimizer', type=float, default=0.001)
     parser.add_argument(
-        '--patience', help='Learning rate used in the optimizer', type=int)
+        '--patience', help='Patience used for early stop in training', type=int)
     parser.add_argument(
-        '--save_metric', help='Learning rate used in the optimizer',  choices=['val_loss', 'val_metric'], default='val_loss')
+        '--save_metric', help='Metric used to monitor and select best model to save',  choices=['val_loss', 'val_metric'], default='val_loss')
     parser.add_argument(
         '--gamma', help='Gamma param for the focal loss (if used)',  type=int, default=2)
     parser.set_defaults(verbose=False)
